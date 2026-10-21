@@ -47,7 +47,10 @@ export default function App() {
     Inter_700Bold,
     BebasNeue_400Regular,
   });
-  const ready = loaded || !!error;
+  // The web app never waits for fonts: text appears at once and swaps when the font files arrive.
+  void loaded;
+  void error;
+  const ready = true;
 
   useEffect(() => {
     initRemoteConfig().catch(() => undefined);

@@ -54,7 +54,7 @@ functions/api/proxy.js  Cloudflare Pages Function
 worker/                 Cloudflare Worker (+ wrangler.toml)
 proxy/core.js           shared proxy logic (CORS, Range, SSRF guard, HLS rewrite)
 public/                 manifest, service worker, icons, Cloudflare _headers/_redirects
-web/index.html          HTML shell (PWA + iOS meta tags)
+public/index.html       HTML shell (PWA + iOS meta tags)
 src/services            sources, plugin runtime, source engine, catalog
 src/components/WebVideo.tsx   <video> + hls.js
 src/screens             UI (Home, Anime, Live TV, Search, Title, Player …)
