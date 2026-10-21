@@ -1,9 +1,10 @@
 import { Image } from './Img';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { memo } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { Title } from '../data/types';
+import { useLayout } from '../theme/useLayout';
 import { colors, radius } from '../theme/tokens';
 import { Button } from './Buttons';
 import { Txt } from './Txt';
@@ -17,24 +18,24 @@ interface BillboardProps {
 }
 
 export const Billboard = memo(function Billboard({ title, inMyList, onPlay, onToggleList, onOpen }: BillboardProps) {
-  const { width: screen } = useWindowDimensions();
-  const width = screen - 32;
-  const height = Math.round(width * 1.42);
+  const lay = useLayout();
+  const width = Math.min(lay.content, 1400) - lay.gutter * 2;
+  const height = lay.wide ? Math.min(560, Math.round(width * 0.42)) : Math.round(width * 1.42);
   const heroImage = title.background || title.poster;
   return (
-    <Pressable onPress={onOpen} style={[styles.card, { width, height }]}>
+    <Pressable onPress={onOpen} style={[styles.card, { width, height }, lay.wide && { alignSelf: 'flex-start', marginLeft: lay.gutter }]}>
       <Image source={heroImage ? { uri: heroImage } : undefined} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} cachePolicy="memory-disk" />
       <LinearGradient colors={['transparent', 'rgba(0,0,0,0.35)', 'rgba(0,0,0,0.92)']} locations={[0.4, 0.62, 1]} style={StyleSheet.absoluteFill} />
-      <View style={styles.content}>
-        <Txt weight="display" size={58} lineHeight={56} align="center" numberOfLines={2} spacing={1}>
+      <View style={[styles.content, lay.wide && { alignItems: 'flex-start', paddingHorizontal: 24, paddingBottom: 40 }]}>
+        <Txt weight="display" size={lay.wide ? 72 : 58} lineHeight={lay.wide ? 70 : 56} align={lay.wide ? 'left' : 'center'} numberOfLines={2} spacing={1}>
           {title.name.toUpperCase()}
         </Txt>
-        <Txt weight="medium" size={13} color={colors.text90} align="center" style={styles.moods} numberOfLines={1}>
+        <Txt weight="medium" size={14} color={colors.text90} align={lay.wide ? 'left' : 'center'} style={styles.moods} numberOfLines={1}>
           {[title.kind === 'series' ? 'Series' : 'Movie', ...title.genres.slice(0, 3)].join('  •  ')}
         </Txt>
-        <View style={styles.buttons}>
-          <Button label="Play" icon="play" variant="white" onPress={onPlay} style={styles.button} />
-          <Button label="My List" icon={inMyList ? 'checkmark' : 'add'} variant="glass" onPress={onToggleList} style={styles.button} />
+        <View style={[styles.buttons, lay.wide && { alignSelf: 'flex-start', marginTop: 8 }]}>
+          <Button label="Play" icon="play" variant="white" onPress={onPlay} style={[styles.button, lay.wide && { flex: 0, width: 160 }]} />
+          <Button label="My List" icon={inMyList ? 'checkmark' : 'add'} variant="glass" onPress={onToggleList} style={[styles.button, lay.wide && { flex: 0, width: 160 }]} />
         </View>
       </View>
     </Pressable>

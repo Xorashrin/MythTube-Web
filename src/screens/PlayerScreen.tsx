@@ -473,6 +473,9 @@ export default function PlayerScreen({ navigation, route }: Props) {
           <Txt size={13} align="center" color={colors.textMuted} style={{ marginTop: 6 }}>
             {engine && engine.servers.length === 0 ? 'New uploads appear every few hours. Try again shortly, or pick another title.' : 'Every server we tried was skipped (wrong length, ad clip or offline). Retry to search again.'}
           </Txt>
+          <Txt size={11} align="center" color={colors.textDim} style={{ marginTop: 10 }}>
+            {engine ? engine.summary() : ''}
+          </Txt>
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 18 }}>
             <Pressable onPress={() => setToken((t) => t + 1)} style={styles.primaryErrorBtn}>
               <Txt weight="bold" size={14} color="#000000">Retry</Txt>

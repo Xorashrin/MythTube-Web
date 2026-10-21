@@ -8,7 +8,7 @@ import cheerio from 'cheerio-without-node-native';
 import CryptoJS from 'crypto-js';
 
 import { cached } from '../cache';
-import { getJson, getText, withTimeout } from '../http';
+import { getJsonMirrored, getTextMirrored, withTimeout } from '../http';
 import { proxied } from '../proxy';
 import { providerDisabled } from './disabled';
 import { NUVIO_REPOS, type NuvioRepo } from './repos';
@@ -56,7 +56,7 @@ export async function loadProviders(kind: 'movie' | 'tv'): Promise<Provider[]> {
     NUVIO_REPOS.map(async (repo) => {
       try {
         const man = await cached(`nuvio:manifest:${repo.id}`, { ttl: MANIFEST_TTL }, () =>
-          getJson<{ scrapers?: Scraper[] }>(`${repo.base}/manifest.json`, { timeout: 12000, retries: 1 }),
+          getJsonMirrored<{ scrapers?: Scraper[] }>(`${repo.base}/manifest.json`, { timeout: 12000 }),
         );
         return (man.scrapers ?? [])
           .filter((s) => s.enabled !== false && s.filename && (!s.supportedTypes || s.supportedTypes.includes(kind) || (kind === 'tv' && s.supportedTypes.includes('anime'))))
@@ -152,7 +152,7 @@ async function readScript(p: Provider): Promise<string> {
   const key = `${p.key}@${p.scraper.version ?? '0'}`;
   const hit = scripts.get(key);
   if (hit) return hit;
-  const code = await getText(`${p.repo.base}/${p.scraper.filename}`, { timeout: 20000, retries: 1 });
+  const code = await getTextMirrored(`${p.repo.base}/${p.scraper.filename}`, { timeout: 20000 });
   scripts.set(key, code);
   return code;
 }

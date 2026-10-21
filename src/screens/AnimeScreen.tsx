@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Billboard } from '../components/Billboard';
 import { Chip } from '../components/Chip';
@@ -12,12 +12,13 @@ import { useRootNav } from '../navigation/types';
 import { ANIME_GENRES, ANIME_ROWS, loadAnimeGenre, useRows } from '../services/catalog';
 import { warmUp } from '../services/playback';
 import { useApp } from '../state/AppState';
+import { useLayout } from '../theme/useLayout';
 import { colors, layout } from '../theme/tokens';
 
 /** Anime tab: AniList discovery (airing schedule, seasons, rankings, genres). Streams come from the anime plugins. */
 export default function AnimeScreen() {
   const nav = useRootNav();
-  const { width } = useWindowDimensions();
+  const lay = useLayout();
   const { profileData, toggleMyList, showToast } = useApp();
   const { rows, refresh, refreshing } = useRows(ANIME_ROWS);
   const [genre, setGenre] = useState<string | null>(null);
@@ -25,7 +26,7 @@ export default function AnimeScreen() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
-  const cell = Math.floor((width - layout.gutter * 2 - 16) / 3);
+  const cell = lay.cell;
 
   const openTitle = useCallback((t: Title) => nav.navigate('Title', { id: t.id }), [nav]);
 
@@ -72,14 +73,14 @@ export default function AnimeScreen() {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Anime" actions={['search']} searchScope={{ kind: 'anime' }} />
+      <ScreenHeader title="Anime" actions={['downloads', 'search']} searchScope={{ kind: 'anime' }} />
       {genre ? (
         <FlatList
-          key={`genre-${genre}`}
+          key={`genre-${genre}-${lay.columns}`}
           data={items}
           keyExtractor={(t) => t.id}
-          numColumns={3}
-          columnWrapperStyle={styles.gridRow}
+          numColumns={lay.columns}
+          columnWrapperStyle={[styles.gridRow, { paddingHorizontal: lay.gutter }]}
           contentContainerStyle={styles.grid}
           onEndReached={() => more(false)}
           onEndReachedThreshold={0.6}

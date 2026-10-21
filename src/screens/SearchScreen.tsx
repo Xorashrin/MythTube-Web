@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Keyboard, Pressable, StyleSheet, TextInput, View, useWindowDimensions, type ListRenderItem } from 'react-native';
+import { ActivityIndicator, FlatList, Keyboard, Pressable, StyleSheet, TextInput, View, type ListRenderItem } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChannelLogo } from '../components/ChannelLogo';
@@ -14,11 +14,12 @@ import type { RootStackParamList } from '../navigation/types';
 import { ANIME_ROWS, loadDetail, rowsByKey, searchAll, useRows } from '../services/catalog';
 import { warmUp } from '../services/playback';
 import { addHistory, clearHistory, getHistory, parseQuery, removeHistory, suggest, type Suggestion } from '../services/searchTools';
+import { useLayout } from '../theme/useLayout';
 import { colors, font, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Search'>;
 
-const RECOMMENDED_ROWS = rowsByKey('bd-bangla', 'cm-series', 'cm-movies');
+const RECOMMENDED_ROWS = rowsByKey('cm-series', 'cm-movies');
 const ANIME_RECOMMENDED = ANIME_ROWS.slice(1, 3);
 
 function matchKind(t: Title, kind?: 'movie' | 'series' | 'anime') {
@@ -29,7 +30,7 @@ function matchKind(t: Title, kind?: 'movie' | 'series' | 'anime') {
 
 export default function SearchScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const lay = useLayout();
   const scope = route.params;
   const [query, setQuery] = useState('');
   // Typing stays responsive; network search runs on the debounced value.
@@ -105,7 +106,7 @@ export default function SearchScreen({ navigation, route }: Props) {
 
   const channels = useMemo(() => (scope?.live ? searchChannels(deferred, 24) : []), [deferred, scope?.live]);
   const hasQuery = deferred.trim().length > 0;
-  const cell = Math.floor((width - 24 - 16) / 3);
+  const cell = lay.cell;
 
   // "Season 1 episode 10" typed after a series name: offer the exact episode and season.
   const series = useMemo(() => (parsed.season || parsed.episode ? results.find((t) => t.kind === 'series') : undefined), [parsed, results]);
@@ -284,13 +285,13 @@ export default function SearchScreen({ navigation, route }: Props) {
         </View>
       ) : (
         <FlatList
-          key="results-grid"
+          key={`results-grid-${lay.columns}`}
           data={results}
           keyExtractor={(t) => t.id}
-          numColumns={3}
+          numColumns={lay.columns}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          columnWrapperStyle={styles.gridRow}
+          columnWrapperStyle={[styles.gridRow, { paddingHorizontal: lay.gutter }]}
           contentContainerStyle={styles.grid}
           initialNumToRender={12}
           ListHeaderComponent={

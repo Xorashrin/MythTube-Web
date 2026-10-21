@@ -14,6 +14,7 @@ import { loadDetail, resolveTitle } from '../services/catalog';
 import { useSourceSearch } from '../services/playback';
 import type { RootStackParamList } from '../navigation/types';
 import { progressFor, useApp, type Rating } from '../state/AppState';
+import { Page } from '../components/Page';
 import { colors, radius } from '../theme/tokens';
 import { formatRuntime, seasonsLabel } from '../utils/format';
 
@@ -73,7 +74,8 @@ function EpisodeRow({ title, episode, onPlay }: { title: Title; episode: Episode
 export default function TitleScreen({ navigation, route }: Props) {
   const [title, setTitle] = useState<Title>(() => resolveTitle(route.params.id));
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width: win } = useWindowDimensions();
+  const width = Math.min(win, 960);
   const { profileData, toggleMyList, rate, showToast } = useApp();
 
   useEffect(() => {
@@ -124,6 +126,7 @@ export default function TitleScreen({ navigation, route }: Props) {
 
   return (
     <View style={styles.root}>
+      <Page>
       <View style={{ paddingTop: insets.top, backgroundColor: colors.bg }}>
         <Pressable onPress={() => play(target?.episode.id)} style={{ width, height: (width * 9) / 16, backgroundColor: title.tint }}>
           <Image
@@ -316,6 +319,7 @@ export default function TitleScreen({ navigation, route }: Props) {
         ) : null}
       </ScrollView>
 
+      </Page>
     </View>
   );
 }

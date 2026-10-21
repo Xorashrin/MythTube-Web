@@ -12,6 +12,7 @@ import { tintFor, type Title } from '../data/types';
 import { cached } from './cache';
 import * as amaderftp from './sources/amaderftp';
 import * as anilist from './sources/anilist';
+import * as bdix from './sources/bdix';
 import * as cinemeta from './sources/cinemeta';
 import * as stremio from './sources/stremio';
 import { CATEGORY, listPosts, SOUTHFREAK, SOUTHFREAK_18 } from './sources/wordpress';
@@ -124,27 +125,10 @@ function wp(key: string, category: number | undefined, perPage = 20): RowDef['lo
 const byDateDesc = (a: Title, b: Title) => (b.addedAt ?? 0) - (a.addedAt ?? 0);
 
 export const HOME_ROWS: RowDef[] = [
-  // Bangladeshi content always comes first.
-  {
-    key: 'bd-bangla',
-    title: 'Bangladeshi & Bangla',
-    load: feed('bd:bangla', async () => {
-      const lists = await Promise.all([
-        listPosts(SOUTHFREAK, { category: CATEGORY.bengali, perPage: 14 }).catch(() => []),
-        listPosts(SOUTHFREAK, { category: CATEGORY.banglaSub, perPage: 10 }).catch(() => []),
-        listPosts(SOUTHFREAK, { category: CATEGORY.banglaDubbed, perPage: 8 }).catch(() => []),
-        listPosts(SOUTHFREAK, { category: CATEGORY.natok, perPage: 8 }).catch(() => []),
-        amaderftp.byLanguage('bangla').catch(() => []),
-      ]);
-      const unique = new Map<string, Title>();
-      for (const t of lists.flat()) unique.set(t.id, t);
-      return [...unique.values()].sort(byDateDesc);
-    }),
-  },
   { key: 'sf-latest', title: 'Just Added', load: wp('latest', undefined, 24) },
   { key: 'cm-movies', title: 'Trending Movies', load: feed('cm:movie', () => cinemeta.catalog('movie')) },
   { key: 'cm-series', title: 'Trending Series', load: feed('cm:series', () => cinemeta.catalog('series')) },
-  { key: 'ft-latest', title: 'BDIX Fast Server', load: feed('ft:latest', () => amaderftp.latest()) },
+  { key: 'ft-latest', title: 'Fast Streams', load: feed('ft:latest', () => amaderftp.latest()) },
   { key: 'sf-hindi', title: 'Hindi Dubbed', load: wp('hindi', CATEGORY.hindiDubbed) },
   { key: 'sf-hollywood', title: 'Hollywood', load: wp('hollywood', CATEGORY.hollywood) },
   { key: 'sf-bollywood', title: 'Bollywood', load: wp('bollywood', CATEGORY.bollywood) },
@@ -215,9 +199,145 @@ function score(t: Title, q: string): number {
   return (q.split(' ').every((w) => n.includes(w)) ? 40 : 10) + bonus;
 }
 
+/** BDIX folders → one title per distinct movie name, with every matching file attached. */
+async function bdixTitles(query: string): Promise<Title[]> {
+  const hits = await bdix.search(query, 8000);
+  const byName = new Map<string, { name: string; year: number; files: { url: string; label: string }[]; server: string }>();
+  for (const { server, files } of hits) {
+    for (const f of files) {
+      const base = f.label.replace(/\.[a-z0-9]{2,4}$/i, '');
+      const cut = /^(.*?)[\s._(\[]+((?:19|20)\d{2})\b/.exec(base);
+      const name = (cut ? cut[1] : base.split(/[\s._]+(?:\d{3,4}p|WEB|BluRay|HDRip)/i)[0]).replace(/[._]+/g, ' ').trim();
+      if (!name) continue;
+      const year = cut ? Number(cut[2]) : new Date().getFullYear();
+      const key = `${norm(name)}-${year}`;
+      const entry = byName.get(key) ?? { name, year, files: [], server: server.name };
+      entry.files.push(f);
+      byName.set(key, entry);
+    }
+  }
+  return [...byName.values()].map((e) => bdix.filesToTitle(e.name, e.year, e.files, e.server));
+}
+
+// ---------------------------------------------------------------- endless feed
+// After the fixed rows, Home keeps producing new rows as you scroll: genres from Cinemeta and AniList and categories
+// from southfreak, each in successive pages. The sequence never ends in practice (page N+1 only stops when a source
+// runs dry, and empty rows are skipped).
+
+const CM_MOVIE_GENRES = ['Action', 'Comedy', 'Drama', 'Thriller', 'Horror', 'Sci-Fi', 'Romance', 'Animation', 'Crime', 'Adventure', 'Fantasy', 'Mystery', 'Family', 'Documentary', 'War', 'History', 'Music', 'Western', 'Biography', 'Sport'];
+const CM_SERIES_GENRES = ['Drama', 'Comedy', 'Crime', 'Action', 'Sci-Fi', 'Mystery', 'Animation', 'Fantasy', 'Documentary', 'Romance', 'Horror', 'Reality-TV', 'Adventure', 'Family', 'History'];
+const SF_CATEGORIES: [string, number][] = [
+  ['Hindi Dubbed', CATEGORY.hindiDubbed], ['Hollywood', CATEGORY.hollywood], ['Bollywood', CATEGORY.bollywood], ['Dual Audio', CATEGORY.dualAudio],
+  ['Telugu', CATEGORY.telugu], ['Tamil', CATEGORY.tamil], ['Malayalam', CATEGORY.malayalam], ['Korean', CATEGORY.korean], ['Bangla', CATEGORY.bengali],
+  ['Thriller', 8], ['Comedy', 9], ['Action', 3], ['Drama', 10], ['Romance', 6], ['Crime', 7], ['Adventure', 33], ['Animation', CATEGORY.animation],
+];
+
+/** Row number `i` of the endless feed. */
+export function feedRow(i: number): RowDef {
+  const lane = i % 4;
+  const n = Math.floor(i / 4);
+  const more = (page: number) => (page > 1 ? 'More ' : '');
+  if (lane === 0) {
+    const genre = CM_MOVIE_GENRES[n % CM_MOVIE_GENRES.length];
+    const page = Math.floor(n / CM_MOVIE_GENRES.length);
+    return { key: `feed-${i}`, title: `${more(page + 1)}${genre} Movies`, load: feed(`feed:cm:m:${genre}:${page}`, () => cinemeta.catalog('movie', { genre, skip: page * 50 }), 6 * 3600 * 1000) };
+  }
+  if (lane === 1) {
+    const [name, id] = SF_CATEGORIES[n % SF_CATEGORIES.length];
+    const page = Math.floor(n / SF_CATEGORIES.length) + 1;
+    return { key: `feed-${i}`, title: `${more(page)}${name}`, load: feed(`feed:sf:${id}:${page}`, () => listPosts(SOUTHFREAK, { category: id, perPage: 20, page }), 6 * 3600 * 1000) };
+  }
+  if (lane === 2) {
+    const genre = CM_SERIES_GENRES[n % CM_SERIES_GENRES.length];
+    const page = Math.floor(n / CM_SERIES_GENRES.length);
+    return { key: `feed-${i}`, title: `${more(page + 1)}${genre} Series`, load: feed(`feed:cm:s:${genre}:${page}`, () => cinemeta.catalog('series', { genre, skip: page * 50 }), 6 * 3600 * 1000) };
+  }
+  const genre = ANIME_GENRES[n % ANIME_GENRES.length];
+  const page = Math.floor(n / ANIME_GENRES.length) + 1;
+  return { key: `feed-${i}`, title: `${more(page)}${genre} Anime`, load: feed(`feed:al:${genre}:${page}`, () => anilist.browse({ sort: 'POPULARITY_DESC', genre, page, perPage: 20 }), 6 * 3600 * 1000) };
+}
+
+/** Grows by a few rows every time the user nears the end of the list. */
+export function useFeedRows() {
+  const [rows, setRows] = useState<RowState[]>([]);
+  const requested = useRef(0);
+  const loading = useRef(0);
+  const availability = useAvailabilityVersion();
+  const stable = useRef(new Map<string, { src: Title[]; out: Title[]; v: number }>()).current;
+
+  const loadRow = useCallback(async (i: number) => {
+    const def = feedRow(i);
+    loading.current++;
+    setRows((prev) => [...prev, { def, items: [], loading: true, error: false }]);
+    try {
+      const items = await def.load();
+      setRows((prev) => prev.map((r) => (r.def.key === def.key ? { ...r, items, loading: false } : r)));
+    } catch {
+      setRows((prev) => prev.map((r) => (r.def.key === def.key ? { ...r, loading: false, error: true } : r)));
+    } finally {
+      loading.current--;
+    }
+  }, []);
+
+  const more = useCallback(
+    (count = 3) => {
+      if (loading.current >= 4) return; // never queue faster than rows arrive
+      for (let k = 0; k < count; k++) loadRow(requested.current++);
+    },
+    [loadRow],
+  );
+
+  useEffect(() => {
+    const pending = rows.flatMap((r) => r.items.slice(0, 6)).filter((t) => t.source === 'cinemeta' || t.source === 'anilist');
+    if (pending.length > 0) verifyLater(pending);
+  }, [rows]);
+
+  const visible = useMemo(
+    () =>
+      rows
+        .map((r) => {
+          const hit = stable.get(r.def.key);
+          if (hit && hit.src === r.items && hit.v === availability) return { ...r, items: hit.out };
+          const out = r.items.filter(isListed);
+          stable.set(r.def.key, { src: r.items, out, v: availability });
+          return { ...r, items: out };
+        })
+        .filter((r) => r.loading || r.items.length > 0),
+    [rows, availability, stable],
+  );
+
+  return { rows: visible, more };
+}
+
 /** Rows by key, in the order requested (keeps screens independent of the Home row order). */
 export function rowsByKey(...keys: string[]): RowDef[] {
   return keys.map((k) => HOME_ROWS.find((r) => r.key === k)).filter((r): r is RowDef => !!r);
+}
+
+/** "Arcane: League of Legends" finds nothing on catalogs that index "Arcane", so weaker spellings are tried too. */
+function queryVariants(query: string): string[] {
+  const full = query.trim();
+  const beforeColon = full.split(/\s*[:–—]\s*|\s+-\s+/)[0].trim();
+  const words = full.split(/\s+/);
+  const noArticle = full.replace(/^(the|a|an)\s+/i, '');
+  const shorter = words.length > 2 ? words.slice(0, -1).join(' ') : '';
+  return [...new Set([full, beforeColon, noArticle, shorter].filter((v) => v.length >= 2))].slice(0, 3);
+}
+
+async function searchOnce(query: string, includeAdult: boolean): Promise<Title[]> {
+  const jobs: Promise<Title[]>[] = [
+    cinemeta.search(query),
+    listPosts(SOUTHFREAK, { search: query, perPage: 15 }),
+    anilist.search(query),
+    amaderftp.search(query),
+    bdixTitles(query),
+  ];
+  if (includeAdult) {
+    jobs.push(listPosts(SOUTHFREAK_18, { search: query, perPage: 15 }));
+    jobs.push(stremio.catalog(stremio.ONLYPORN, 'eporner', { search: query }));
+  }
+  const settled = await Promise.allSettled(jobs.map((j) => Promise.race([j, new Promise<Title[]>((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000))])));
+  return settled.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
 }
 
 /** Fans out to every source in parallel; a slow or dead source never blocks the others. */
@@ -225,18 +345,11 @@ export async function searchAll(query: string, includeAdult = false): Promise<Ti
   const q = norm(query);
   if (q.length < 2) return [];
   const key = `search:${q}:${includeAdult ? 1 : 0}`;
-  const jobs: Promise<Title[]>[] = [
-    cinemeta.search(query),
-    listPosts(SOUTHFREAK, { search: query, perPage: 15 }),
-    anilist.search(query),
-    amaderftp.search(query),
-  ];
-  if (includeAdult) {
-    jobs.push(listPosts(SOUTHFREAK_18, { search: query, perPage: 15 }));
-    jobs.push(stremio.catalog(stremio.ONLYPORN, 'eporner', { search: query }));
+  let results: Title[] = [];
+  for (const variant of queryVariants(query)) {
+    results = await searchOnce(variant, includeAdult);
+    if (results.length > 0) break;
   }
-  const settled = await Promise.allSettled(jobs.map((j) => Promise.race([j, new Promise<Title[]>((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000))])));
-  const results = settled.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
   if (results.length === 0) {
     // every source failed: serve the last good result for this query
     return (await cached<Title[]>(key, { ttl: Infinity }, async () => [])).map((t) => registry.get(t.id) ?? t);

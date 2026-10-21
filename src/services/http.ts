@@ -22,8 +22,8 @@ interface Breaker {
 }
 
 const breakers = new Map<string, Breaker>();
-const BREAKER_LIMIT = 4;
-const BREAKER_COOLDOWN = 3 * 60 * 1000;
+const BREAKER_LIMIT = 6;
+const BREAKER_COOLDOWN = 90 * 1000;
 
 export function hostOf(url: string): string {
   const m = /^[a-z]+:\/\/([^/:?#]+)/i.exec(url);
@@ -31,7 +31,11 @@ export function hostOf(url: string): string {
 }
 
 /** False while a host's breaker is open (too many consecutive failures recently). */
+/** Infrastructure hosts (config, catalogs, id mapping) never trip the breaker: one hiccup must not disable every plugin. */
+const BREAKER_EXEMPT = /(raw\.githubusercontent\.com|jsdelivr\.net|githack\.com|strem\.io|anilist\.co|ani\.zip|haglund\.dev|themoviedb\.org)$/i;
+
 export function hostAvailable(url: string): boolean {
+  if (BREAKER_EXEMPT.test(hostOf(url))) return true;
   const b = breakers.get(hostOf(url));
   return !b || b.failures < BREAKER_LIMIT || Date.now() > b.openUntil;
 }
@@ -44,6 +48,10 @@ export function recentlyOnline(): boolean {
 }
 
 export function recordHost(url: string, ok: boolean) {
+  if (BREAKER_EXEMPT.test(hostOf(url))) {
+    if (ok) lastSuccessAt = Date.now();
+    return;
+  }
   if (ok) lastSuccessAt = Date.now();
   const host = hostOf(url);
   const b = breakers.get(host) ?? { failures: 0, openUntil: 0 };
@@ -144,6 +152,36 @@ export async function request(url: string, opts: RequestOptions = {}): Promise<T
   }
   recordHost(url, false);
   throw last;
+}
+
+/** GitHub raw files with CDN fallbacks: raw.githubusercontent.com is slow or blocked on some networks. */
+export function githubMirrors(url: string): string[] {
+  const m = /^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/(?:refs\/heads\/)?([^/]+)\/(.+)$/.exec(url);
+  if (!m) return [url];
+  const [, owner, repo, branch, path] = m;
+  return [
+    url,
+    `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}/${path}`,
+    `https://fastly.jsdelivr.net/gh/${owner}/${repo}@${branch}/${path}`,
+    `https://raw.githack.com/${owner}/${repo}/${branch}/${path}`,
+  ];
+}
+
+/** Tries each mirror in turn (first one that answers wins). */
+export async function getTextMirrored(url: string, opts?: RequestOptions): Promise<string> {
+  let last: unknown = new Error('No mirror answered');
+  for (const candidate of githubMirrors(url)) {
+    try {
+      return await getText(candidate, { ...opts, retries: 0 });
+    } catch (e) {
+      last = e;
+    }
+  }
+  throw last;
+}
+
+export async function getJsonMirrored<T>(url: string, opts?: RequestOptions): Promise<T> {
+  return JSON.parse(await getTextMirrored(url, opts)) as T;
 }
 
 export async function getText(url: string, opts?: RequestOptions): Promise<string> {

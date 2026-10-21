@@ -17,6 +17,7 @@ import type { NuvioRepo } from './nuvio/repos';
 import { loadProviders, penalizeProvider, rankProviders, runProvider, type NuvioStream } from './nuvio/runtime';
 import { expandLink, hostLabel, resolveMirror, type Playable } from './resolvers';
 import * as amaderftp from './sources/amaderftp';
+import * as bdix from './sources/bdix';
 import { findAddon, STREMIFY, streams as addonStreams } from './sources/stremio';
 import { getVariants, listPosts, siteFor, SOUTHFREAK, type Variant } from './sources/wordpress';
 
@@ -366,7 +367,8 @@ export class SourceSearch {
   private gatherersLeft = 0;
   earlyLeft = 0;
   private listeners = new Set<() => void>();
-  private failures = 0;
+  /** Counters shown on the failure screen, so a "no server" result can be diagnosed. */
+  readonly stats = { verified: 0, unreachable: 0, rejected: 0, plugins: 0, pluginsTotal: 0, pluginsWithStreams: 0 };
 
   constructor(
     readonly title: Title,
@@ -411,9 +413,12 @@ export class SourceSearch {
           this.results.push({ server, playable, ms, score: score(server, playable, ms, false) });
           this.results.sort((a, b) => b.score - a.score);
           markAvailability(this.title.id, true);
+          this.stats.verified++;
+          this.stats.verified++;
         })
-        .catch(() => {
-          this.failures++;
+        .catch((e) => {
+          if (/too small|does not match|length|promo|preview/i.test(e instanceof Error ? e.message : '')) this.stats.rejected++;
+          else this.stats.unreachable++;
         })
         .finally(() => {
           this.active--;
@@ -450,6 +455,28 @@ export class SourceSearch {
         this.emit();
       }
     }, this.quick ? QUICK_CAP_MS : HARD_CAP_MS);
+  }
+
+  /** One line describing what the search found, for the failure screen. */
+  summary(): string {
+    const s = this.stats;
+    const parts = [`${this.servers.length} servers found`, `${s.verified} verified`];
+    if (s.unreachable) parts.push(`${s.unreachable} unreachable`);
+    if (s.rejected) parts.push(`${s.rejected} skipped (ad clip, wrong length or title)`);
+    if (s.pluginsTotal) parts.push(`plugins: ${s.plugins}/${s.pluginsTotal} run, ${s.pluginsWithStreams} returned links`);
+    else if (!this.quick) parts.push('plugin list not loaded');
+    return parts.join(' · ');
+  }
+
+  /** One line describing what the search found, for the failure screen. */
+  summary(): string {
+    const s = this.stats;
+    const parts = [`${this.servers.length} servers found`, `${s.verified} verified`];
+    if (s.unreachable) parts.push(`${s.unreachable} unreachable`);
+    if (s.rejected) parts.push(`${s.rejected} skipped (ad clip, wrong length or title)`);
+    if (s.pluginsTotal) parts.push(`plugins: ${s.plugins}/${s.pluginsTotal} run, ${s.pluginsWithStreams} returned links`);
+    else if (!this.quick) parts.push('plugin list not loaded');
+    return parts.join(' · ');
   }
 
   /** true as soon as any verified stream exists, false when the search ended empty, undefined on timeout. */
@@ -584,6 +611,12 @@ function buildGatherers(title: Title, episode: Episode | undefined, quick: boole
         }
       });
     }
+    if (title.source !== 'bdix') {
+      early(async (add) => {
+        const found = await bdix.search(`${names[names.length > 1 ? 1 : 0]} ${title.year}`.trim(), 9000);
+        found.forEach((f) => add(f.files.slice(0, 6).map((file, i) => fileServer(ctx, `bx:${f.server.id}:${file.url}:${i}`, f.server.name, file.url, [file.url], file.label, 'bdix'))));
+      });
+    }
   }
 
   // 3. Nuvio plugins and Stremio streams (need TMDB/IMDb ids). They are heavier, so they only start when the
@@ -614,13 +647,18 @@ function buildGatherers(title: Title, episode: Episode | undefined, quick: boole
       if (ids.tmdbId) {
         const tmdb = String(ids.tmdbId);
         const providers = await rankProviders(await loadProviders(kind), preferredLangs, { anime: title.source === 'anilist' });
+        engine.stats.pluginsTotal = providers.length;
+        engine.stats.pluginsTotal = providers.length;
         const runBatch = async (batch: typeof providers) => {
           let next = 0;
           const worker = async () => {
             while (next < batch.length && !engine.done && !engine.hasTop) {
               const p = batch[next++];
+              engine.stats.plugins++;
               try {
-                add(streamServers(ctx, await runProvider(p, tmdb, kind, season, number), 'nuvio'));
+                const found = await runProvider(p, tmdb, kind, season, number);
+                if (found.length > 0) engine.stats.pluginsWithStreams++;
+                add(streamServers(ctx, found, 'nuvio'));
               } catch {
                 // provider failed or timed out: the next one takes over
               }

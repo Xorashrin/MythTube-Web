@@ -2,7 +2,7 @@
 // fresh copy of config/sources.json (from this repository) is fetched in the background, so new plugin
 // repositories, new BDIX servers and kill-switches for bad providers reach every install within hours.
 import { cached } from './cache';
-import { getJson } from './http';
+import { getJsonMirrored } from './http';
 import { setDisabled } from './nuvio/disabled';
 import { loadProviders, prefetchScripts, rankProviders } from './nuvio/runtime';
 import { NUVIO_REPOS, type NuvioRepo } from './nuvio/repos';
@@ -51,7 +51,7 @@ export async function initRemoteConfig(): Promise<void> {
     const cachedCfg = await cached<RemoteConfig | null>('remote-config', { ttl: Infinity }, async () => null).catch(() => null);
     if (cachedCfg) apply(cachedCfg);
     // 2. A fresh copy, in the background.
-    const fresh = await cached<RemoteConfig>('remote-config', { ttl: CONFIG_TTL, force: true }, () => getJson<RemoteConfig>(CONFIG_URL, { timeout: 8000, retries: 1 }));
+    const fresh = await cached<RemoteConfig>('remote-config', { ttl: CONFIG_TTL, force: true }, () => getJsonMirrored<RemoteConfig>(CONFIG_URL, { timeout: 8000 }));
     if (fresh) apply(fresh);
   } catch {
     // offline or the file is unreachable: bundled defaults stay in effect

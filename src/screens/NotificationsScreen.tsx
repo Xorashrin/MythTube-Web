@@ -7,6 +7,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { Txt } from '../components/Txt';
 import { newsChannels, type Channel } from '../data/channels';
 import type { RootStackParamList } from '../navigation/types';
+import { Page } from '../components/Page';
 import { colors, layout } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
@@ -20,6 +21,7 @@ export default function NotificationsScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
+      <Page>
       <ScreenHeader title="News" back />
       <ScrollView>
         <View style={styles.sectionHeader}>
@@ -55,6 +57,7 @@ export default function NotificationsScreen({ navigation }: Props) {
           )}
         />
       </ScrollView>
+      </Page>
     </View>
   );
 }

@@ -11,6 +11,7 @@ import AnimeScreen from '../screens/AnimeScreen';
 import TvScreen from '../screens/TvScreen';
 import { useApp } from '../state/AppState';
 import { colors, font } from '../theme/tokens';
+import { SIDEBAR_WIDTH, useLayout } from '../theme/useLayout';
 import type { TabParamList } from './types';
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -26,6 +27,7 @@ function ProfileTabIcon({ focused }: { focused: boolean }) {
 }
 
 export function Tabs() {
+  const { wide } = useLayout();
   return (
     <>
     <Tab.Navigator
@@ -35,8 +37,12 @@ export function Tabs() {
         freezeOnBlur: true,
         tabBarActiveTintColor: colors.text,
         tabBarInactiveTintColor: colors.textDim,
-        tabBarStyle: { backgroundColor: 'rgba(0,0,0,0.97)', borderTopWidth: 0, elevation: 0 },
-        tabBarLabelStyle: { fontFamily: font.medium, fontSize: 10 },
+        tabBarPosition: wide ? 'left' : 'bottom',
+        tabBarVariant: wide ? 'material' : 'uikit',
+        tabBarStyle: wide
+          ? { backgroundColor: '#0b0b0b', borderRightWidth: 0, width: SIDEBAR_WIDTH, paddingTop: 20 }
+          : { backgroundColor: 'rgba(0,0,0,0.97)', borderTopWidth: 0, elevation: 0 },
+        tabBarLabelStyle: wide ? { fontFamily: font.medium, fontSize: 15 } : { fontFamily: font.medium, fontSize: 10 },
         sceneStyle: { backgroundColor: colors.bg },
       }}
     >

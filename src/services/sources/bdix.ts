@@ -4,6 +4,7 @@ import { tintFor, type Title } from '../../data/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { cached } from '../cache';
+import { MEGA_HOSTS } from './bdixHosts';
 import { decodeEntities, getJson, getText, hostAvailable, hostOf, mapLimit, withTimeout } from '../http';
 
 export interface FtpServer {
@@ -11,6 +12,8 @@ export interface FtpServer {
   name: string;
   type: 'index' | 'circle';
   base: string;
+  /** Tier in docs/12 (1 = confirmed video, 5 = unreachable from the harvesting sandbox); curated servers have none. */
+  tier?: number;
   /** Sub-paths to search first (movie folders). */
   paths?: string[];
 }
@@ -266,20 +269,49 @@ async function saveReach() {
   if (reach) await AsyncStorage.setItem(REACH_KEY, JSON.stringify(reach)).catch(() => undefined);
 }
 
-/** Servers that never answered on this network are skipped for 12 h; servers that did are tried first. */
+/** Every host from the harvested mega list (docs/12), as crawlable index servers. */
+function megaServers(): FtpServer[] {
+  return MEGA_HOSTS.filter(([base, tier]) => tier <= 3 && !/\/\/(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(base)).map(([base, tier]) => ({ id: `mega:${hostOf(base)}`, name: hostOf(base).replace(/^www\./, ''), type: 'index' as const, base, tier }));
+}
+
+// A cloud proxy cannot reach LAN-only servers and every probe is a proxy request: stay small on the web.
+const UNKNOWN_PER_SEARCH = 36;
+const CURSOR_KEY = '__cursor';
+
+/**
+ * Servers that answered on this network come first. Servers never tried are tried in rotating batches (so the whole
+ * list, hundreds of hosts, is covered across searches without hammering the network), and servers that failed
+ * repeatedly are skipped for 12 h.
+ */
 async function orderByReach(servers: FtpServer[]): Promise<FtpServer[]> {
   const r = await readReach();
   const now = Date.now();
-  const usable = servers.filter((s) => {
+  const known: FtpServer[] = [];
+  const fresh: FtpServer[] = [];
+  for (const s of servers) {
     const h = r[hostOf(s.base)];
-    return !h || h.ok > 0 || h.fail < 3 || now - h.at > 12 * 3600 * 1000;
-  });
-  return usable.sort((a, b) => (r[hostOf(b.base)]?.ok ?? 0) - (r[hostOf(a.base)]?.ok ?? 0));
+    if (h && h.ok > 0) known.push(s);
+    else if (!h || h.fail < 3 || now - h.at > 12 * 3600 * 1000) fresh.push(s);
+  }
+  known.sort((a, b) => (r[hostOf(b.base)]?.ok ?? 0) - (r[hostOf(a.base)]?.ok ?? 0));
+  // Curated servers (tier-less) and tier 1–2 hosts before the long tail, then rotate through the rest.
+  fresh.sort((a, b) => (a.tier ?? 0) - (b.tier ?? 0));
+  const head = fresh.filter((s) => (s.tier ?? 0) <= 2);
+  const tail = fresh.filter((s) => (s.tier ?? 0) > 2);
+  const cursor = (r[CURSOR_KEY]?.ok ?? 0) % Math.max(1, tail.length);
+  const rotated = [...tail.slice(cursor), ...tail.slice(0, cursor)].slice(0, UNKNOWN_PER_SEARCH);
+  r[CURSOR_KEY] = { ok: cursor + UNKNOWN_PER_SEARCH, fail: 0, at: now };
+  return [...known, ...head, ...rotated];
 }
 
 async function allServers(): Promise<FtpServer[]> {
-  const known = new Set(BDIX_SERVERS.map((s) => hostOf(s.base)));
-  const extra = (await directoryServers()).filter((s) => !known.has(hostOf(s.base)));
+  const seen = new Set(BDIX_SERVERS.map((s) => hostOf(s.base)));
+  const extra = [...(await directoryServers()), ...megaServers()].filter((s) => {
+    const h = hostOf(s.base);
+    if (!h || seen.has(h)) return false;
+    seen.add(h);
+    return true;
+  });
   return orderByReach([...BDIX_SERVERS, ...extra]);
 }
 

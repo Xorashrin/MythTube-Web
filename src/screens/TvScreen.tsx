@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type ListRenderItem } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, View, type ListRenderItem } from 'react-native';
 
 import { ChannelLogo } from '../components/ChannelLogo';
 import { Chip } from '../components/Chip';
@@ -7,16 +7,16 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { Txt } from '../components/Txt';
 import { CHANNEL_FILTERS, filterChannels, type Channel } from '../data/channels';
 import { useRootNav } from '../navigation/types';
+import { useLayout } from '../theme/useLayout';
 import { colors, layout } from '../theme/tokens';
 
-const COLUMNS = 3;
 
 export default function TvScreen() {
   const nav = useRootNav();
-  const { width } = useWindowDimensions();
+  const lay = useLayout();
   const [filter, setFilter] = useState('All');
   const channels = useMemo(() => filterChannels(filter), [filter]);
-  const cell = Math.floor((width - layout.gutter * 2 - 8 * (COLUMNS - 1)) / COLUMNS);
+  const cell = lay.cell;
 
   const renderItem = useCallback<ListRenderItem<Channel>>(
     ({ item }) => (
@@ -51,9 +51,10 @@ export default function TvScreen() {
         key={filter}
         data={channels}
         keyExtractor={(c) => c.id}
-        numColumns={COLUMNS}
+        key={`grid-${lay.columns}`}
+        numColumns={lay.columns}
         renderItem={renderItem}
-        columnWrapperStyle={styles.row}
+        columnWrapperStyle={[styles.row, { paddingHorizontal: lay.gutter }]}
         contentContainerStyle={styles.grid}
         initialNumToRender={18}
         maxToRenderPerBatch={18}

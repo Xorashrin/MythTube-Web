@@ -11,6 +11,7 @@ import { clearPersistentCache } from '../services/cache';
 import { API_PROXY } from '../services/proxy';
 import { LANGUAGES } from '../services/playback';
 import { useApp } from '../state/AppState';
+import { Page } from '../components/Page';
 import { colors } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AppSettings'>;
@@ -44,6 +45,7 @@ export default function AppSettingsScreen(_props: Props) {
 
   return (
     <View style={styles.root}>
+      <Page>
       <ScreenHeader title="App Settings" back />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <SectionLabel>Playback</SectionLabel>
@@ -124,6 +126,7 @@ export default function AppSettingsScreen(_props: Props) {
           </>
         ) : null}
       </Sheet>
+      </Page>
     </View>
   );
 }

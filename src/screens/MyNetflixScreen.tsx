@@ -13,6 +13,7 @@ import type { Title } from '../data/types';
 import { resolveTitle, rowsByKey, useRows } from '../services/catalog';
 import { useRootNav } from '../navigation/types';
 import { useApp } from '../state/AppState';
+import { Page } from '../components/Page';
 import { colors, layout } from '../theme/tokens';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -84,6 +85,7 @@ export default function MyNetflixScreen() {
 
   return (
     <View style={styles.root}>
+      <Page>
       <ScreenHeader title="My MythTube" actions={['search', 'menu']} onMenu={() => setMenu(true)} />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {activeProfile ? (
@@ -116,6 +118,7 @@ export default function MyNetflixScreen() {
       <Sheet visible={menu} onClose={() => setMenu(false)}>
         <SheetItem label="App Settings" icon="settings-outline" onPress={() => { setMenu(false); nav.navigate('AppSettings'); }} />
       </Sheet>
+      </Page>
     </View>
   );
 }

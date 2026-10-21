@@ -1,7 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { ChannelRow } from '../components/ChannelRow';
 import { Poster } from '../components/Poster';
@@ -12,6 +12,7 @@ import { adultChannels, type Channel } from '../data/channels';
 import type { Title } from '../data/types';
 import { ADULT_ROWS, loadAdultPage, useRows } from '../services/catalog';
 import type { RootStackParamList } from '../navigation/types';
+import { useLayout } from '../theme/useLayout';
 import { colors, layout } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdultContent'>;
@@ -20,7 +21,7 @@ const AGE_GATE_KEY = 'mythtube:adult-confirmed-v1';
 
 /** 18+ section: live feeds plus an endlessly paged library from southfreak.in, behind a one-time age confirmation. */
 export default function AdultContentScreen({ navigation }: Props) {
-  const { width } = useWindowDimensions();
+  const lay = useLayout();
   const [confirmed, setConfirmed] = useState(false);
   const [checking, setChecking] = useState(true);
   const [items, setItems] = useState<Title[]>([]);
@@ -29,7 +30,7 @@ export default function AdultContentScreen({ navigation }: Props) {
   const [done, setDone] = useState(false);
   const channels = useMemo(() => adultChannels(), []);
   const { rows } = useRows(ADULT_ROWS, confirmed);
-  const cell = Math.floor((width - layout.gutter * 2 - 8 * 2) / 3);
+  const cell = lay.cell;
 
   useEffect(() => {
     AsyncStorage.getItem(AGE_GATE_KEY)
@@ -98,8 +99,9 @@ export default function AdultContentScreen({ navigation }: Props) {
       <FlatList
         data={items}
         keyExtractor={(t) => t.id}
-        numColumns={3}
-        columnWrapperStyle={styles.row}
+        key={`grid-${lay.columns}`}
+        numColumns={lay.columns}
+        columnWrapperStyle={[styles.row, { paddingHorizontal: lay.gutter }]}
         contentContainerStyle={styles.grid}
         onEndReached={more}
         onEndReachedThreshold={0.6}

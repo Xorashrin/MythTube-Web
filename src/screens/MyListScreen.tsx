@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useMemo, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '../components/Buttons';
 import { Chip } from '../components/Chip';
@@ -14,6 +14,7 @@ import type { Title } from '../data/types';
 import { resolveTitle } from '../services/catalog';
 import type { RootStackParamList } from '../navigation/types';
 import { progressFor, useApp } from '../state/AppState';
+import { useLayout } from '../theme/useLayout';
 import { colors } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MyList'>;
@@ -29,13 +30,13 @@ const FILTERS: { key: Filter; label: string }[] = [
 const SORTS: Sort[] = ['Suggested', 'Date Added to List', 'Release Date', 'A - Z'];
 
 export default function MyListScreen({ navigation }: Props) {
-  const { width } = useWindowDimensions();
+  const lay = useLayout();
   const { profileData, toggleMyList, showToast } = useApp();
   const [filter, setFilter] = useState<Filter>('all');
   const [sort, setSort] = useState<Sort>('Date Added to List');
   const [sortOpen, setSortOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const cell = (width - 24 - 16) / 3;
+  const cell = lay.cell;
 
   const items = useMemo(() => {
     let list: Title[] = profileData.myList.map(resolveTitle);
@@ -113,9 +114,10 @@ export default function MyListScreen({ navigation }: Props) {
       ) : (
         <FlatList
           data={items}
-          numColumns={3}
+          key={`grid-${lay.columns}`}
+          numColumns={lay.columns}
           keyExtractor={(t) => t.id}
-          columnWrapperStyle={{ gap: 8, paddingHorizontal: 12 }}
+          columnWrapperStyle={{ gap: 8, paddingHorizontal: lay.gutter }}
           contentContainerStyle={{ gap: 8, paddingTop: 8, paddingBottom: 30 }}
           renderItem={({ item }) => (
             <View>
