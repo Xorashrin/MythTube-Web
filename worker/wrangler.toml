@@ -1,0 +1,7 @@
+name = "mythtube-proxy"
+main = "index.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+# Comma separated origins allowed to call the proxy, e.g. "https://mythtube.vercel.app,https://watch.example.com"
+ALLOWED_ORIGINS = ""

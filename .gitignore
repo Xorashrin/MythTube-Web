@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.expo/
+web-build/
+expo-env.d.ts
+.vercel/
+.wrangler/
+.env*.local
+.DS_Store
+*.tsbuildinfo
+npm-debug.*

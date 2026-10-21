@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "MythTube",
+    "slug": "mythtube-web",
+    "version": "2.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "scheme": "mythtube",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#000000",
+    "platforms": ["web"],
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

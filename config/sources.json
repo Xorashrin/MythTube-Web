@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "nuvioRepos": [
+    {
+      "id": "nia",
+      "name": "NiakVIO",
+      "base": "https://raw.githubusercontent.com/niakw/NiakVIO/refs/heads/main",
+      "priority": 20,
+      "lang": "fr"
+    },
+    {
+      "id": "rar",
+      "name": "Rare Anime",
+      "base": "https://raw.githubusercontent.com/rareanimeaddon-blip/Nuvio-plugins/refs/heads/main",
+      "priority": 21,
+      "lang": "multi"
+    },
+    {
+      "id": "hhh",
+      "name": "Tokyo Insider & more",
+      "base": "https://raw.githubusercontent.com/hihihihihiiray/nuvio-plugins/refs/heads/main",
+      "priority": 22,
+      "lang": "multi"
+    },
+    {
+      "id": "zay",
+      "name": "Zayntoun",
+      "base": "https://raw.githubusercontent.com/Zayntoun/nuvio-plugins/refs/heads/main",
+      "priority": 23,
+      "lang": "multi"
+    },
+    {
+      "id": "afa",
+      "name": "Afanag (Hindi)",
+      "base": "https://raw.githubusercontent.com/afanag/nuvio-providers/refs/heads/main",
+      "priority": 24,
+      "lang": "multi"
+    },
+    {
+      "id": "beb",
+      "name": "Bebo (Anime/Arabic)",
+      "base": "https://raw.githubusercontent.com/bebokurd/nuvio-plugins/refs/heads/main",
+      "priority": 25,
+      "lang": "ar"
+    },
+    {
+      "id": "ibe",
+      "name": "Iberia",
+      "base": "https://raw.githubusercontent.com/iberiaimm/nuvio-providers/refs/heads/main",
+      "priority": 26,
+      "lang": "multi"
+    },
+    {
+      "id": "lio",
+      "name": "Lions",
+      "base": "https://raw.githubusercontent.com/lions-can-code-everyday/Nuvio-Providers/refs/heads/main",
+      "priority": 27,
+      "lang": "multi"
+    },
+    {
+      "id": "koe",
+      "name": "Pengu",
+      "base": "https://raw.githubusercontent.com/koerakutsa/pengu-nuvio-plugins/refs/heads/main",
+      "priority": 28,
+      "lang": "multi"
+    },
+    {
+      "id": "umm",
+      "name": "Doom",
+      "base": "https://raw.githubusercontent.com/ummarm/Doom-plug/refs/heads/main",
+      "priority": 29,
+      "lang": "multi"
+    },
+    {
+      "id": "ahm",
+      "name": "Ahmed",
+      "base": "https://raw.githubusercontent.com/ahmedelkassrawy/nuvio-providers/refs/heads/main",
+      "priority": 30,
+      "lang": "multi"
+    },
+    {
+      "id": "ari",
+      "name": "Arif",
+      "base": "https://raw.githubusercontent.com/arifbutitv/My_Nuvio_plugins/refs/heads/main",
+      "priority": 31,
+      "lang": "multi"
+    },
+    {
+      "id": "tha",
+      "name": "NTL",
+      "base": "https://raw.githubusercontent.com/thanhluancklk/ntl-nuvio-plugins/refs/heads/main",
+      "priority": 32,
+      "lang": "multi"
+    },
+    {
+      "id": "mkv",
+      "name": "FlixIndia",
+      "base": "https://raw.githubusercontent.com/mkv9903/NuvioProviders/refs/heads/main",
+      "priority": 33,
+      "lang": "multi"
+    },
+    {
+      "id": "hem",
+      "name": "Anime Heman",
+      "base": "https://raw.githubusercontent.com/hemanthmannam/NuvioAnime-Heman/refs/heads/main",
+      "priority": 34,
+      "lang": "multi"
+    },
+    {
+      "id": "mus",
+      "name": "Anikoto",
+      "base": "https://raw.githubusercontent.com/Mush-iii/nuvio-anime/refs/heads/main",
+      "priority": 35,
+      "lang": "multi"
+    },
+    {
+      "id": "van",
+      "name": "Donghua/Anime",
+      "base": "https://raw.githubusercontent.com/vanomarb/anime-scraper/refs/heads/main",
+      "priority": 36,
+      "lang": "multi"
+    },
+    {
+      "id": "tri",
+      "name": "Videasy/Vidfast",
+      "base": "https://raw.githubusercontent.com/Trixjustbetter/videasy-nuvio/refs/heads/main",
+      "priority": 37,
+      "lang": "multi"
+    },
+    {
+      "id": "mak",
+      "name": "KissKH",
+      "base": "https://raw.githubusercontent.com/makeran218/nuvio-providers/refs/heads/main",
+      "priority": 38,
+      "lang": "multi"
+    },
+    {
+      "id": "a4u",
+      "name": "Anime4up",
+      "base": "https://raw.githubusercontent.com/1995BK201/nuvio-anime4up/refs/heads/main",
+      "priority": 39,
+      "lang": "ar"
+    },
+    {
+      "id": "sub",
+      "name": "BDIX ICC/BanglaPlex",
+      "base": "https://raw.githubusercontent.com/subirmazumdar/nuvio-provider/refs/heads/main",
+      "priority": 40,
+      "lang": "bn"
+    },
+    {
+      "id": "mfq",
+      "name": "BDIX DhakaFlix",
+      "base": "https://raw.githubusercontent.com/mushfiqamin/nuvio-providers/refs/heads/main",
+      "priority": 41,
+      "lang": "bn"
+    },
+    {
+      "id": "nil",
+      "name": "DhakaFlix (Niloy)",
+      "base": "https://raw.githubusercontent.com/Niloy-Sarker/nuvio-plugins/refs/heads/master",
+      "priority": 42,
+      "lang": "bn"
+    },
+    {
+      "id": "taz",
+      "name": "DhakaFlix (Tazihad)",
+      "base": "https://raw.githubusercontent.com/tazihad/nuvio-plugins/refs/heads/main",
+      "priority": 43,
+      "lang": "bn"
+    },
+    {
+      "id": "gow",
+      "name": "Gowaru (French)",
+      "base": "https://raw.githubusercontent.com/Gowaru/gowaru-nuvio-providers/refs/heads/main",
+      "priority": 44,
+      "lang": "fr"
+    },
+    {
+      "id": "bli",
+      "name": "Nakios/Purstream",
+      "base": "https://raw.githubusercontent.com/blizzx4644/Nuvio_plugins/refs/heads/main",
+      "priority": 45,
+      "lang": "fr"
+    },
+    {
+      "id": "mun",
+      "name": "Latam Anime",
+      "base": "https://raw.githubusercontent.com/municipalidad1998/nuvio-providers/refs/heads/main",
+      "priority": 46,
+      "lang": "es"
+    },
+    {
+      "id": "cry",
+      "name": "AnimeFLV",
+      "base": "https://raw.githubusercontent.com/CrypticShampoos/Nuvio-Anime-Test/refs/heads/main",
+      "priority": 47,
+      "lang": "es"
+    },
+    {
+      "id": "mo7",
+      "name": "Arabic Anime",
+      "base": "https://raw.githubusercontent.com/mo7AmMeD64/nuvio-plugins/refs/heads/main",
+      "priority": 48,
+      "lang": "ar"
+    },
+    {
+      "id": "man",
+      "name": "Turkish (Manitux)",
+      "base": "https://raw.githubusercontent.com/manitux-app/nuvio-plugins/refs/heads/main",
+      "priority": 49,
+      "lang": "tr"
+    },
+    {
+      "id": "kho",
+      "name": "Turkish (KhooLy)",
+      "base": "https://raw.githubusercontent.com/KhooLy/nuvio-providers/refs/heads/master",
+      "priority": 50,
+      "lang": "tr"
+    },
+    {
+      "id": "onr",
+      "name": "Turkish Anime",
+      "base": "https://raw.githubusercontent.com/onrcvndev/nuvio-providers/refs/heads/main",
+      "priority": 51,
+      "lang": "tr"
+    },
+    {
+      "id": "s09",
+      "name": "StreamNest (German)",
+      "base": "https://raw.githubusercontent.com/s09x/StreamNest/refs/heads/main",
+      "priority": 52,
+      "lang": "de"
+    },
+    {
+      "id": "fen",
+      "name": "Italian",
+      "base": "https://raw.githubusercontent.com/fenrir22/NuvioIT/refs/heads/main",
+      "priority": 53,
+      "lang": "it"
+    },
+    {
+      "id": "a2r",
+      "name": "Romanian",
+      "base": "https://raw.githubusercontent.com/A2R14N/nuvio-providers/refs/heads/main",
+      "priority": 54,
+      "lang": "ro"
+    }
+  ],
+  "disabledRepos": [],
+  "disabledProviders": [],
+  "bdixServers": [],
+  "disabledBdix": []
+}

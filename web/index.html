@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <title>MythTube</title>
+    <meta name="description" content="Movies, series, anime and live TV in one place." />
+
+    <!-- Installable app (Android, desktop, iOS "Add to Home Screen") -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="MythTube" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+
+    <!-- Warm up the connections the first screen needs -->
+    <link rel="preconnect" href="https://images.metahub.space" crossorigin />
+    <link rel="dns-prefetch" href="https://image.tmdb.org" />
+
+    <style id="app-reset">
+      html, body { height: 100%; margin: 0; background: #000; overscroll-behavior: none; }
+      body { overflow: hidden; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+      #root { display: flex; height: 100%; flex: 1; background: #000; }
+      /* Smooth momentum scrolling and no text selection flicker on touch devices */
+      * { -webkit-touch-callout: none; }
+    </style>
+  </head>
+  <body>
+    <noscript>MythTube needs JavaScript to run.</noscript>
+    <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function () {});
+        });
+      }
+    </script>
+  </body>
+</html>

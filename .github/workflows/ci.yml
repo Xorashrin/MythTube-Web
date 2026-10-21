@@ -1,0 +1,38 @@
+name: Web build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Align Expo packages
+        run: npx expo install --fix
+      - name: Shrink icon fonts to the glyphs in use
+        continue-on-error: true
+        run: |
+          pip install --quiet fonttools
+          python3 tools/subset_icon_fonts.py
+      - name: Type check
+        run: npx tsc --noEmit
+      - name: Export web build
+        run: npx expo export -p web
+      - name: Report bundle size
+        run: |
+          du -sh dist
+          find dist/_expo/static/js -name "*.js" -exec ls -l {} \;
+      - uses: actions/upload-artifact@v5
+        with:
+          name: mythtube-web-dist
+          path: dist
