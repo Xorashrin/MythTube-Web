@@ -175,6 +175,11 @@ function pluginFetch(input: unknown, init: RequestInit = {}): Promise<Response> 
   });
 }
 
+/** Downloads scripts into the session cache without running them. */
+export async function prefetchScripts(providers: Provider[]): Promise<void> {
+  for (const p of providers) await readScript(p).catch(() => undefined);
+}
+
 function compile(p: Provider): Promise<GetStreams> {
   const hit = compiled.get(p.key);
   if (hit) return hit;

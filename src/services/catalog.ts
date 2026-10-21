@@ -215,6 +215,11 @@ function score(t: Title, q: string): number {
   return (q.split(' ').every((w) => n.includes(w)) ? 40 : 10) + bonus;
 }
 
+/** Rows by key, in the order requested (keeps screens independent of the Home row order). */
+export function rowsByKey(...keys: string[]): RowDef[] {
+  return keys.map((k) => HOME_ROWS.find((r) => r.key === k)).filter((r): r is RowDef => !!r);
+}
+
 /** Fans out to every source in parallel; a slow or dead source never blocks the others. */
 export async function searchAll(query: string, includeAdult = false): Promise<Title[]> {
   const q = norm(query);
